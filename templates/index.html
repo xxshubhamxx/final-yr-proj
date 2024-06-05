@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Classifier</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        #classifierForm {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+        }
+        input[type="submit"] {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        #resultBox {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #fff;
+            width: 100%;
+            max-width: 600px;
+        }
+        .Appellant { background-color: lightblue; }
+        .Argument_by_Appellant { background-color: lightgreen; }
+        .Argument_by_Defendant { background-color: lightcoral; }
+        .Argument_by_Petitioner { background-color: lightyellow; }
+        .Argument_by_Respondent { background-color: lightpink; }
+        .Conclusion { background-color: lightgray; }
+        .Court_Discourse { background-color: lightgoldenrodyellow; }
+        .Fact { background-color: lightcyan; }
+        .Issue { background-color: lightsalmon; }
+        .Judge { background-color: lightseagreen; }
+        .Petitioner { background-color: lightsteelblue; }
+        .Precedent_Analysis { background-color: lightgoldenrodyellow; }
+        .Ratio { background-color: lightcoral; }
+        .Respondent { background-color: lightyellow; }
+        .Section_Analysis { background-color: lightgreen; }
+        .paragraph { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: #333;
+            color: #fff;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <h1>Text Classifier</h1>
+    <form id="classifierForm">
+        <textarea name="paragraph" rows="5" cols="50" placeholder="Enter a paragraph..."></textarea><br>
+        <input type="submit" value="Classify">
+    </form>
+    <div id="loading">Loading...</div>
+    <div id="resultBox"></div>
+    <div id="tooltip" class="tooltip"></div>
+
+    <script>
+        document.getElementById('classifierForm').onsubmit = function(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const loadingIndicator = document.getElementById('loading');
+            const resultBox = document.getElementById('resultBox');
+            const tooltip = document.getElementById('tooltip');
+
+            resultBox.innerHTML = ''; // Clear previous results
+            loadingIndicator.style.display = 'block'; // Show loading indicator
+
+            fetch('/classify', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingIndicator.style.display = 'none'; // Hide loading indicator
+                data.paragraph.forEach((text, index) => {
+                    const className = data.classes[index].replace(/\s+/g, '_');
+                    const paragraph = document.createElement('div');
+                    paragraph.className = 'paragraph ' + className;
+                    paragraph.textContent = text;
+                    paragraph.dataset.className = data.classes[index]; // Store the class name
+                    paragraph.addEventListener('mouseover', function(event) {
+                        tooltip.textContent = this.dataset.className;
+                        tooltip.style.opacity = 1;
+                    });
+                    paragraph.addEventListener('mousemove', function(event) {
+                        tooltip.style.left = event.pageX + 10 + 'px';
+                        tooltip.style.top = event.pageY + 10 + 'px';
+                    });
+                    paragraph.addEventListener('mouseout', function() {
+                        tooltip.style.opacity = 0;
+                    });
+                    resultBox.appendChild(paragraph);
+                });
+            })
+            .catch(error => {
+                loadingIndicator.style.display = 'none'; // Hide loading indicator
+                resultBox.innerHTML = 'An error occurred: ' + error.message;
+            });
+        };
+    </script>
+</body>
+</html>
